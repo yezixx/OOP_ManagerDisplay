@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,7 +10,7 @@ public class AddBookDialog extends JDialog{
     JLabel titleLabel, authorLabel, ISBNLabel;
     JTextField title, author, ISBN;
     boolean isConfirmed = false;
-    public AddBookDialog(Vector<Vector<String>> bookList) {
+    public AddBookDialog(Vector<Vector<String>> bookList, DefaultTableModel model) {
         setTitle("Add Book");
         JPanel panel = new JPanel();
 
@@ -35,7 +36,7 @@ public class AddBookDialog extends JDialog{
         buttonPanel.setLayout(new FlowLayout());
         JButton yesButton = new JButton("입력 완료");
         JButton noButton = new JButton("취소");
-        yesButton.addActionListener(new addBookListener(bookList));
+        yesButton.addActionListener(new addBookListener(bookList, model));
         noButton.addActionListener(e -> {
             title.setText("");
             author.setText("");
@@ -58,12 +59,18 @@ public class AddBookDialog extends JDialog{
 
     public class addBookListener implements ActionListener {
         Vector<Vector<String>> bookList;
-        public addBookListener(Vector<Vector<String>> bookList) {
+        DefaultTableModel model;
+        public addBookListener(Vector<Vector<String>> bookList, DefaultTableModel model) {
             this.bookList = bookList;
+            this.model = model;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(title.getText().isEmpty()||author.getText().isEmpty()||ISBN.getText().length()!=13 || !ISBN.getText().matches("[+-]?\\d*(\\.\\d+)?")){
+                JOptionPane.showMessageDialog(null, "입력한 도서 정보가 잘못되었습니다.", "입력 오류", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             // 완료 버튼 -> confirmDialog 띄움
             ConfirmTaskDialog confirmTaskDialog = new ConfirmTaskDialog("입력");
             confirmTaskDialog.setVisible(true);
@@ -94,15 +101,15 @@ public class AddBookDialog extends JDialog{
                 // dialog에서 완료 버튼 눌렀을 때만 수행
                 if (confirmTaskDialog.isConfirmed()) {
                     // bookList에 추가
-                    bookList.add(new Vector<String>(){
+                    Vector<String> newBook = new Vector<String>(){
                         {
                             add(title.getText());
                             add(author.getText());
                             add(ISBN.getText());
                         }
-                    });
-                    BookTable bookTable = new BookTable(bookList);
-                    bookTable.updateTable();
+                    };
+                    bookList.add(newBook);
+                    model.addRow(newBook);
 
                     BookCSVController bookCsvController = new BookCSVController();
                     BookInfo book = new BookInfo(title.getText(), author.getText(), ISBN.getText());
@@ -113,8 +120,8 @@ public class AddBookDialog extends JDialog{
                     author.setText("");
                     ISBN.setText("");
                     dispose();
-                    CompleteTaskDialog complete = new CompleteTaskDialog("입력");
-                    complete.setVisible(true);
+
+                    JOptionPane.showMessageDialog(null, "도서 입력이 완료되었습니다.", "도서 입력 완료", JOptionPane.PLAIN_MESSAGE);
                 }
             }
         }

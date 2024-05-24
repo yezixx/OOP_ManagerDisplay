@@ -18,12 +18,9 @@ public class ConfirmTaskDialog extends JDialog {
         JButton yesButton = new JButton("완료");
         JButton noButton = new JButton("취소");
 
-        yesButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setConfirmed(true);
-                dispose();
-            }
+        yesButton.addActionListener(e -> {
+            setConfirmed(true);
+            dispose();
         });
 
         noButton.addActionListener(e-> {dispose();});

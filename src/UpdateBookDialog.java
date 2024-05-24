@@ -38,7 +38,7 @@ public class UpdateBookDialog extends JDialog {
         buttonPanel.setLayout(new FlowLayout());
         JButton yesButton = new JButton("입력 완료");
         JButton noButton = new JButton("취소");
-        yesButton.addActionListener(new MyListener(books, book));
+        yesButton.addActionListener(new UpdateBookListener(books, book));
         noButton.addActionListener(e -> {dispose();});
         buttonPanel.add(yesButton);
         buttonPanel.add(noButton);
@@ -55,31 +55,38 @@ public class UpdateBookDialog extends JDialog {
         setSize(400, 200);
     }
 
-    public class MyListener implements ActionListener {
+    public class UpdateBookListener implements ActionListener {
         BookInfo currentBook;
         Vector<Vector<String>> books;
 
-        public MyListener(Vector<Vector<String>> books, BookInfo book) {
+        public UpdateBookListener(Vector<Vector<String>> books, BookInfo book) {
             this.books = books;
             this.currentBook = book;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            // 완료 버튼 -> dialog 띄움
-            ConfirmTaskDialog dialog = new ConfirmTaskDialog("수정");
-            dialog.setVisible(true);
+            if(title.getText().isEmpty() // 제목, 작가, ISBN 입력 안했거나 ISBN이 13자리가 아니거나 ISBN이 숫자가 아닌 경우
+                    || author.getText().isEmpty()
+                    || ISBN.getText().length()!=13
+                    || !ISBN.getText().matches("[+-]?\\d*(\\.\\d+)?")){
+                JOptionPane.showMessageDialog(null, "입력한 도서 정보가 잘못되었습니다.", "입력 오류", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            // 완료 버튼 -> confirmTaskDialog 띄움
+            ConfirmTaskDialog confirmTaskDialog = new ConfirmTaskDialog("수정");
+            confirmTaskDialog.setVisible(true);
 
             // 대기 스레드 실행
-            UpdateBookDialog.MyListener.WaitingThread waitingThread = new UpdateBookDialog.MyListener.WaitingThread(dialog);
+            UpdateBookListener.WaitingThread waitingThread = new UpdateBookListener.WaitingThread(confirmTaskDialog);
             waitingThread.start();
         }
 
         private class WaitingThread extends Thread {
             private ConfirmTaskDialog confirmTaskDialog;
 
-            public WaitingThread(ConfirmTaskDialog dialog) {
-                this.confirmTaskDialog = dialog;
+            public WaitingThread(ConfirmTaskDialog confirmTaskDialog) {
+                this.confirmTaskDialog = confirmTaskDialog;
             }
 
             @Override
@@ -96,11 +103,13 @@ public class UpdateBookDialog extends JDialog {
                 // dialog에서 완료 버튼 눌렀을 때만 수행
                 if (confirmTaskDialog.isConfirmed()) {
                     BookInfo newBook = new BookInfo(title.getText(), author.getText(), ISBN.getText());
+                    // CSV 파일 수정
                     BookCSVController csvCtrl = new BookCSVController();
                     csvCtrl.updateCSV(books, currentBook, newBook);
-                    setVisible(false);
-                    CompleteTaskDialog complete = new CompleteTaskDialog("수정");
-                    complete.setVisible(true);
+                    // dialog 닫기
+                    dispose();
+                    // 수정 완료
+                    JOptionPane.showMessageDialog(null, "도서 수정이 완료되었습니다.", "도서 수정 완료", JOptionPane.PLAIN_MESSAGE);
                 }
             }
         }

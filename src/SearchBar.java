@@ -34,74 +34,22 @@ public class SearchBar extends JPanel{
         public void actionPerformed(ActionEvent e) {
             String keyword = text.getText();
             System.out.println(keyword);
-            if (!keyword.isEmpty()) {  // Use isEmpty() to check if keyword is empty
+            if (!keyword.isEmpty()) { // 검색어가 비어있지 않을 때
                 filteredBooks = books.stream()
                         .filter(book -> book != null && book.size() > 1 &&
                                 book.get(0) != null && book.get(1) != null &&
                                 (book.get(0).contains(keyword) || book.get(1).contains(keyword)))
                         .collect(Collectors.toCollection(Vector::new));
 
-                if (filteredBooks.isEmpty()) {
-                    NotfoundBook notFoundBook = new NotfoundBook();
-                    notFoundBook.setVisible(true);
-                } else {
-                    System.out.println(filteredBooks.get(0).get(1));
+                if (filteredBooks.isEmpty()) { // 검색 결과가 없을 때 -> 오류 메시지 출력
+                    JOptionPane.showMessageDialog(null, "찾으시는 책이 목록에 없습니다.", "검색 결과 오류", JOptionPane.ERROR_MESSAGE);
+                } else { // 검색 결과가 있을 때 -> 검색 결과 다이얼로그 띄움
                     SearchResultDialog searchResultDialog = new SearchResultDialog(filteredBooks);
                     searchResultDialog.setVisible(true);
                 }
-            } else {
-                NeedInput needInput = new NeedInput();
-                needInput.setVisible(true);
+            } else { // 검색어가 비어있을 때 -> 오류 메시지 출력
+                JOptionPane.showMessageDialog(null, "찾으려는 책 제목이나 작가명을 입력해주세요.", "도서 입력 오류", JOptionPane.ERROR_MESSAGE);
             }
-        }
-    }
-    public class NotfoundBook extends JDialog {
-        public NotfoundBook() {
-            setTitle("Can Not Found Book");
-            setLayout(new BorderLayout());
-
-            JPanel nullPanel = new JPanel();
-
-            JPanel textPanel = new JPanel();
-            JLabel text = new JLabel("찾으시는 책이 목록에 없습니다.");
-            textPanel.add(text);
-
-            JPanel buttonPanel = new JPanel();
-            JButton button = new JButton("확인");
-            button.addActionListener(e->{setVisible(false);});
-            buttonPanel.add(button);
-
-            add(nullPanel, BorderLayout.NORTH);
-            add(textPanel, BorderLayout.CENTER);
-            add(buttonPanel, BorderLayout.SOUTH);
-
-            setLocation(650, 300);
-            setSize(300,150);
-        }
-    }
-
-    public class NeedInput extends JDialog {
-        public NeedInput() {
-            setTitle("Please Enter Book Information");
-            setLayout(new BorderLayout());
-
-            JPanel nullPanel = new JPanel();
-
-            JPanel textPanel = new JPanel();
-            JLabel text = new JLabel("찾으려는 책 제목이나 작가명을 입력해주세요.");
-            textPanel.add(text);
-
-            JPanel buttonPanel = new JPanel();
-            JButton button = new JButton("확인");
-            button.addActionListener(e->{setVisible(false);});
-            buttonPanel.add(button);
-
-            add(nullPanel, BorderLayout.NORTH);
-            add(textPanel, BorderLayout.CENTER);
-            add(buttonPanel, BorderLayout.SOUTH);
-
-            setLocation(650, 300);
-            setSize(300,150);
         }
     }
 }

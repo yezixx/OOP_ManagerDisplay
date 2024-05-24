@@ -1,3 +1,4 @@
+import javax.swing.table.DefaultTableModel;
 import java.io.*;
 import java.util.*;
 
@@ -5,7 +6,7 @@ public class BookCSVController {
     private String filePath;
 
     public BookCSVController() {
-        this.filePath = "./test_lib.csv";
+        this.filePath = "./subset_lib.csv";
     }
 
     public Vector<Vector<String>> readCSV() {
@@ -16,11 +17,11 @@ public class BookCSVController {
         try {
             br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "utf-8"));
             br.readLine(); // 첫 번째 줄 스킵 (column 정보)
-            while ((line = br.readLine()) != null) {
-                Vector<String> aLine = new Vector<>();
-                String[] lineArr = csvSplit(line);
-                aLine = new Vector<String>(Arrays.asList(lineArr));
-                csvList.add(aLine);
+            while ((line = br.readLine()) != null) { // 파일 끝까지 읽기
+                Vector<String> aLine = new Vector<>(); // 한 줄씩 읽어서 저장할 벡터
+                String[] lineArr = csvSplit(line); // csvSplit() 메소드로 한 줄을 쉼표 단위로 나누어 배열에 저장
+                aLine = new Vector<String>(Arrays.asList(lineArr)); // 배열을 벡터로 변환
+                csvList.add(aLine); // 한 줄씩 벡터에 저장
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -42,14 +43,15 @@ public class BookCSVController {
         File csv = new File(filePath);
         BufferedWriter bw = null; // 출력 스트림 생성
         try {
+            // 파일이 없으면 새로 만들고, 있으면 기존 파일에 이어서 작성한다
             bw = new BufferedWriter(new FileWriter(csv, true));
-            // csv파일의 기존 값에 이어쓰려면 위처럼 true를 지정하고, 기존 값을 덮어쓰려면 true를 삭제한다
 
-            String aData = "";
-            aData = book.getTitle() + "," + book.getAuthor() + "," + book.getISBN();
             // 한 줄에 넣을 각 데이터 사이에 ,를 넣는다
-            bw.write(aData);
+            String aData = "";
+            aData = aData.join(",", book.getTitle(), book.getAuthor(), book.getISBN());
             // 작성한 데이터를 파일에 넣는다
+            bw.write(aData);
+
             bw.newLine(); // 개행
 
         } catch (FileNotFoundException e) {
@@ -69,7 +71,7 @@ public class BookCSVController {
     }
 
     public void updateCSV(Vector<Vector<String>> books, BookInfo selectedBook, BookInfo newBookInfo) {
-        for (Vector<String> book : books) {
+        for (Vector<String> book : books) { // books 벡터를 순회하며 선택된 책 정보와 일치하는 책 정보를 찾아 수정
             if (book.get(0).equals(selectedBook.getTitle()) &&
                     book.get(1).equals(selectedBook.getAuthor()) &&
                     book.get(2).equals(selectedBook.getISBN())) {
@@ -79,10 +81,10 @@ public class BookCSVController {
             }
         }
 
-        // Write the updated list back to the CSV file
+
         BufferedWriter bw = null;
-        try {
-            bw = new BufferedWriter(new FileWriter(filePath, false)); // Overwrite the existing file
+        try { // 수정된 정보를 파일에 다시 쓰기
+            bw = new BufferedWriter(new FileWriter(filePath, false));
             for (Vector<String> book : books) {
                 String aData = String.join(",", book);
                 bw.write(aData);
@@ -102,17 +104,21 @@ public class BookCSVController {
         }
     }
 
-    public void deleteBook(Vector<Vector<String>> books, BookInfo selectedBook) {
+    public void deleteBook(Vector<Vector<String>> books, BookInfo selectedBook, DefaultTableModel model, int row) {
+        // 선택된 책 정보와 일치하는 책 정보를 books 벡터에서 삭제
         books.removeIf(book -> book.get(0).equals(selectedBook.getTitle()) &&
                 book.get(1).equals(selectedBook.getAuthor()) &&
                 book.get(2).equals(selectedBook.getISBN()));
+        // 수정된 정보를 파일에 다시 쓰기
         writeUpdatedCSV(books);
+        // 테이블에서 선택된 행 삭제
+        model.removeRow(row);
     }
 
     private void writeUpdatedCSV(Vector<Vector<String>> books) {
         BufferedWriter bw = null;
         try {
-            bw = new BufferedWriter(new FileWriter(filePath, false)); // Overwrite the existing file
+            bw = new BufferedWriter(new FileWriter(filePath, false));
             for (Vector<String> book : books) {
                 String aData = String.join(",", book);
                 bw.write(aData);
@@ -132,7 +138,7 @@ public class BookCSVController {
         }
     }
 
-    public static String[] csvSplit(String str){
+    public static String[] csvSplit(String str){ // csv 파일을 읽어서 쉼표 단위로 나누는 메소드 -> 따옴표 안의 쉼표는 무시
         String[] resultStr=null;
         String result="";
         String[] a=str.split(",");
@@ -161,7 +167,7 @@ public class BookCSVController {
             }
             if(i!=a.length-1 && cnt==0)result+="|,|";
         }
-        //	System.out.println(result);
+
         resultStr=result.split("\\|,\\|");
         return resultStr;
     }
